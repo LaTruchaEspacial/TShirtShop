@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "401325204616",
+    "project_id": "t-shirt-shop-c5d8d",
+    "storage_bucket": "t-shirt-shop-c5d8d.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:401325204616:android:57f3fcd1e9efb9e0316b3d",
+        "android_client_info": {
+          "package_name": "crm.t_shirtshop"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCZcVCiBxAPmHoUQpSDwO9szVmgiKhY030"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
