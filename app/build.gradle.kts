@@ -6,12 +6,12 @@ plugins {
 
 android {
     namespace = "crm.t_shirtshop"
-    compileSdk = 34
+    compileSdk = 35
 
     defaultConfig {
         applicationId = "crm.t_shirtshop"
         minSdk = 26
-        targetSdk = 34
+        targetSdk = 35
         versionCode = 1
         versionName = "1.0"
 
@@ -76,6 +76,7 @@ dependencies {
     implementation(libs.androidx.material3)
     implementation(libs.firebase.auth.ktx)
     implementation(libs.firebase.firestore.ktx)
+    implementation(libs.androidx.appcompat)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
