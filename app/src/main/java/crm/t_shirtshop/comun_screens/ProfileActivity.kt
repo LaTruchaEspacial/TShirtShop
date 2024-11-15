@@ -124,7 +124,7 @@ fun ProfileScreen(auth: Auth) {
                 modifier = Modifier
                     .fillMaxHeight()
                     .fillMaxWidth(0.5f)
-                    .background(Color.Yellow)
+                    .background(Color(0xFFFFC107))
                     .align(Alignment.TopStart)
                     .padding(top = 56.dp)
             ) {
