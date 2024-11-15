@@ -72,7 +72,7 @@ fun ProfileScreen(auth: Auth) {
                         )
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Yellow),
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color(0xFFFFC107)),
                 modifier = Modifier.fillMaxWidth()
             )
 
