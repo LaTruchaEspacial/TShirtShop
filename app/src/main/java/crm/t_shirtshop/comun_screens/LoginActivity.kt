@@ -56,11 +56,14 @@ class LoginActivity : ComponentActivity() {
         }
     }
 }
-
 @Composable
 fun LoginScreen(onLogin: (String, String) -> Unit, onRegisterClick: () -> Unit) {
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
+    var emailError by remember { mutableStateOf<String?>(null) }
+    var passwordError by remember { mutableStateOf<String?>(null) }
+
+    val isFormValid = emailError == null && passwordError == null && email.isNotBlank() && password.isNotBlank()
 
     // Imagen de fondo
     Box(
@@ -103,23 +106,56 @@ fun LoginScreen(onLogin: (String, String) -> Unit, onRegisterClick: () -> Unit) 
 
                     OutlinedTextField(
                         value = email,
-                        onValueChange = { email = it },
+                        onValueChange = {
+                            email = it
+                            emailError = if (!android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
+                                "Correo electrónico inválido"
+                            } else {
+                                null
+                            }
+                        },
                         label = { Text("Correo Electrónico") },
+                        isError = emailError != null,
                         modifier = Modifier.fillMaxWidth()
                     )
+                    emailError?.let {
+                        Text(
+                            text = it,
+                            color = Color.Red,
+                            fontSize = 12.sp,
+                            modifier = Modifier.align(Alignment.Start)
+                        )
+                    }
                     Spacer(modifier = Modifier.height(8.dp))
 
                     OutlinedTextField(
                         value = password,
-                        onValueChange = { password = it },
+                        onValueChange = {
+                            password = it
+                            passwordError = when {
+                                password.contains(" ") -> "La contraseña no puede contener espacios"
+                                password.length < 6 -> "La contraseña debe tener al menos 6 caracteres"
+                                else -> null
+                            }
+                        },
                         label = { Text("Contraseña") },
+                        isError = passwordError != null,
                         modifier = Modifier.fillMaxWidth()
                     )
+                    passwordError?.let {
+                        Text(
+                            text = it,
+                            color = Color.Red,
+                            fontSize = 12.sp,
+                            modifier = Modifier.align(Alignment.Start)
+                        )
+                    }
                     Spacer(modifier = Modifier.height(20.dp))
 
                     Button(
                         onClick = { onLogin(email, password) },
                         colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFFC107)),
+                        enabled = isFormValid,
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(50.dp)
@@ -134,7 +170,6 @@ fun LoginScreen(onLogin: (String, String) -> Unit, onRegisterClick: () -> Unit) 
 
                     Spacer(modifier = Modifier.height(13.dp))
 
-                    // Texto para redirigir al registro
                     Text(
                         text = "¿No tienes cuenta? Regístrate",
                         color = Color.DarkGray,

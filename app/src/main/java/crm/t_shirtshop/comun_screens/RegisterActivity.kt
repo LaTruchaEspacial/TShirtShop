@@ -55,14 +55,17 @@ class RegisterActivity : ComponentActivity() {
             }
         }
     }
-}
-
-@Composable
+}@Composable
 fun RegisterScreen(onRegister: (String, String, String, String) -> Unit, onLoginClick: () -> Unit) {
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var nombre by remember { mutableStateOf("") }
     var apellido by remember { mutableStateOf("") }
+    var emailError by remember { mutableStateOf<String?>(null) }
+    var passwordError by remember { mutableStateOf<String?>(null) }
+
+    val isFormValid = emailError == null && passwordError == null &&
+            email.isNotBlank() && password.isNotBlank() && nombre.isNotBlank() && apellido.isNotBlank()
 
     Box(
         modifier = Modifier
@@ -119,23 +122,56 @@ fun RegisterScreen(onRegister: (String, String, String, String) -> Unit, onLogin
 
                     OutlinedTextField(
                         value = email,
-                        onValueChange = { email = it },
+                        onValueChange = {
+                            email = it
+                            emailError = if (!android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
+                                "Correo electrónico inválido"
+                            } else {
+                                null
+                            }
+                        },
                         label = { Text("Correo Electrónico") },
+                        isError = emailError != null,
                         modifier = Modifier.fillMaxWidth()
                     )
+                    emailError?.let {
+                        Text(
+                            text = it,
+                            color = Color.Red,
+                            fontSize = 12.sp,
+                            modifier = Modifier.align(Alignment.Start)
+                        )
+                    }
                     Spacer(modifier = Modifier.height(8.dp))
 
                     OutlinedTextField(
                         value = password,
-                        onValueChange = { password = it },
+                        onValueChange = {
+                            password = it
+                            passwordError = when {
+                                password.contains(" ") -> "La contraseña no puede contener espacios"
+                                password.length < 6 -> "La contraseña debe tener al menos 6 caracteres"
+                                else -> null
+                            }
+                        },
                         label = { Text("Contraseña") },
+                        isError = passwordError != null,
                         modifier = Modifier.fillMaxWidth()
                     )
+                    passwordError?.let {
+                        Text(
+                            text = it,
+                            color = Color.Red,
+                            fontSize = 12.sp,
+                            modifier = Modifier.align(Alignment.Start)
+                        )
+                    }
                     Spacer(modifier = Modifier.height(20.dp))
 
                     Button(
                         onClick = { onRegister(email, password, nombre, apellido) },
                         colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFFC107)),
+                        enabled = isFormValid,
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(50.dp)
