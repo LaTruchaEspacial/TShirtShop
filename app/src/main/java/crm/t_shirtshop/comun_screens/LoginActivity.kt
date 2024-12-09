@@ -24,10 +24,10 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import crm.t_shirtshop.auth.Auth
+import crm.t_shirtshop.admin_screens.AdminActivity
 import crm.t_shirtshop.client_screens.HomeActivity
 import crm.t_shirtshop.ui.theme.TShirtShopTheme
 import crm.t_shirtshop.R
-import crm.t_shirtshop.comun_screens.RegisterActivity
 
 class LoginActivity : ComponentActivity() {
 
@@ -39,11 +39,8 @@ class LoginActivity : ComponentActivity() {
             TShirtShopTheme {
                 LoginScreen(
                     onLogin = { email, password ->
-                        auth.login(email, password) { success, message ->
-                            if (success) {
-                                startActivity(Intent(this, HomeActivity::class.java))
-                                finish()
-                            } else {
+                        auth.login(this, email, password) { success, message ->
+                            if (!success) {
                                 Toast.makeText(this, message ?: "Error al iniciar sesión", Toast.LENGTH_LONG).show()
                             }
                         }
@@ -56,6 +53,7 @@ class LoginActivity : ComponentActivity() {
         }
     }
 }
+
 @Composable
 fun LoginScreen(onLogin: (String, String) -> Unit, onRegisterClick: () -> Unit) {
     var email by remember { mutableStateOf("") }
@@ -65,7 +63,6 @@ fun LoginScreen(onLogin: (String, String) -> Unit, onRegisterClick: () -> Unit) 
 
     val isFormValid = emailError == null && passwordError == null && email.isNotBlank() && password.isNotBlank()
 
-    // Imagen de fondo
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -76,10 +73,8 @@ fun LoginScreen(onLogin: (String, String) -> Unit, onRegisterClick: () -> Unit) 
             modifier = Modifier.fillMaxSize()
         )
 
-        // Tarjeta centrada con el formulario
         Box(
-            modifier = Modifier
-                .fillMaxSize(),
+            modifier = Modifier.fillMaxSize(),
             contentAlignment = Alignment.Center
         ) {
             androidx.compose.material3.Card(
@@ -90,8 +85,7 @@ fun LoginScreen(onLogin: (String, String) -> Unit, onRegisterClick: () -> Unit) 
                 shape = RoundedCornerShape(20.dp),
             ) {
                 Column(
-                    modifier = Modifier
-                        .padding(16.dp),
+                    modifier = Modifier.padding(16.dp),
                     verticalArrangement = Arrangement.Center,
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {

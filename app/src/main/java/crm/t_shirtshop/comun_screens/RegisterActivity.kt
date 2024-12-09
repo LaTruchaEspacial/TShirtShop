@@ -55,7 +55,8 @@ class RegisterActivity : ComponentActivity() {
             }
         }
     }
-}@Composable
+}
+@Composable
 fun RegisterScreen(onRegister: (String, String, String, String) -> Unit, onLoginClick: () -> Unit) {
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
@@ -63,13 +64,15 @@ fun RegisterScreen(onRegister: (String, String, String, String) -> Unit, onLogin
     var apellido by remember { mutableStateOf("") }
     var emailError by remember { mutableStateOf<String?>(null) }
     var passwordError by remember { mutableStateOf<String?>(null) }
+    var nameError by remember { mutableStateOf<String?>(null) }
+    var lastNameError by remember { mutableStateOf<String?>(null) }
 
-    val isFormValid = emailError == null && passwordError == null &&
-            email.isNotBlank() && password.isNotBlank() && nombre.isNotBlank() && apellido.isNotBlank()
+    val isFormValid = emailError == null && passwordError == null && nameError == null &&
+            lastNameError == null && email.isNotBlank() && password.isNotBlank() &&
+            nombre.isNotBlank() && apellido.isNotBlank()
 
     Box(
-        modifier = Modifier
-            .fillMaxSize()
+        modifier = Modifier.fillMaxSize()
     ) {
         Image(
             painter = painterResource(id = R.drawable.fondo4),
@@ -78,8 +81,7 @@ fun RegisterScreen(onRegister: (String, String, String, String) -> Unit, onLogin
         )
 
         Box(
-            modifier = Modifier
-                .fillMaxSize(),
+            modifier = Modifier.fillMaxSize(),
             contentAlignment = Alignment.Center
         ) {
             androidx.compose.material3.Card(
@@ -90,8 +92,7 @@ fun RegisterScreen(onRegister: (String, String, String, String) -> Unit, onLogin
                 shape = RoundedCornerShape(20.dp),
             ) {
                 Column(
-                    modifier = Modifier
-                        .padding(16.dp),
+                    modifier = Modifier.padding(16.dp),
                     verticalArrangement = Arrangement.Center,
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
@@ -106,18 +107,46 @@ fun RegisterScreen(onRegister: (String, String, String, String) -> Unit, onLogin
 
                     OutlinedTextField(
                         value = nombre,
-                        onValueChange = { nombre = it },
+                        onValueChange = {
+                            nombre = it
+                            nameError = if (nombre.any { c -> !c.isLetter() && c != ' ' }) {
+                                "Nombre no válido"
+                            } else null
+                        },
                         label = { Text("Nombre") },
+                        isError = nameError != null,
                         modifier = Modifier.fillMaxWidth()
                     )
+                    nameError?.let {
+                        Text(
+                            text = it,
+                            color = Color.Red,
+                            fontSize = 12.sp,
+                            modifier = Modifier.align(Alignment.Start)
+                        )
+                    }
                     Spacer(modifier = Modifier.height(8.dp))
 
                     OutlinedTextField(
                         value = apellido,
-                        onValueChange = { apellido = it },
+                        onValueChange = {
+                            apellido = it
+                            lastNameError = if (apellido.any { c -> !c.isLetter() && c != ' ' }) {
+                                "Apellido no válido"
+                            } else null
+                        },
                         label = { Text("Apellido") },
+                        isError = lastNameError != null,
                         modifier = Modifier.fillMaxWidth()
                     )
+                    lastNameError?.let {
+                        Text(
+                            text = it,
+                            color = Color.Red,
+                            fontSize = 12.sp,
+                            modifier = Modifier.align(Alignment.Start)
+                        )
+                    }
                     Spacer(modifier = Modifier.height(8.dp))
 
                     OutlinedTextField(
@@ -126,9 +155,7 @@ fun RegisterScreen(onRegister: (String, String, String, String) -> Unit, onLogin
                             email = it
                             emailError = if (!android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
                                 "Correo electrónico inválido"
-                            } else {
-                                null
-                            }
+                            } else null
                         },
                         label = { Text("Correo Electrónico") },
                         isError = emailError != null,

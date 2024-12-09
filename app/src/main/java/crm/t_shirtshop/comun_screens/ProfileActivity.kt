@@ -26,6 +26,7 @@ import crm.t_shirtshop.auth.Auth
 import crm.t_shirtshop.client_screens.CarritoActivity
 import crm.t_shirtshop.client_screens.HomeActivity
 import crm.t_shirtshop.client_screens.MenuItem
+import crm.t_shirtshop.dataClass.User
 import crm.t_shirtshop.ui.theme.TShirtShopTheme
 
 class ProfileActivity : ComponentActivity() {
@@ -46,7 +47,7 @@ class ProfileActivity : ComponentActivity() {
 @Composable
 fun ProfileScreen(auth: Auth) {
     val context = LocalContext.current
-    var userData by remember { mutableStateOf<Map<String, Any>?>(null) }
+    var userData by remember { mutableStateOf<User?>(null) }
     var isMenuExpanded by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
@@ -85,7 +86,7 @@ fun ProfileScreen(auth: Auth) {
                 verticalArrangement = Arrangement.Top,
                 modifier = Modifier.fillMaxSize().padding(top = 16.dp)
             ) {
-                // Foto de perfil
+                // Foto de perfil (por ahora solo un texto placeholder)
                 Box(
                     modifier = Modifier
                         .size(100.dp)
@@ -108,11 +109,11 @@ fun ProfileScreen(auth: Auth) {
                         colors = CardDefaults.cardColors(containerColor = Color.LightGray)
                     ) {
                         Column(modifier = Modifier.padding(16.dp)) {
-                            Text(text = "Nombre: ${data["nombre"] ?: "N/A"}", fontSize = 16.sp)
+                            Text(text = "Nombre: ${data.nombre}", fontSize = 16.sp)
                             Spacer(modifier = Modifier.height(8.dp))
-                            Text(text = "Apellido: ${data["apellido"] ?: "N/A"}", fontSize = 16.sp)
+                            Text(text = "Apellido: ${data.apellido}", fontSize = 16.sp)
                             Spacer(modifier = Modifier.height(8.dp))
-                            Text(text = "Email: ${data["email"] ?: "N/A"}", fontSize = 16.sp)
+                            Text(text = "Email: ${data.email}", fontSize = 16.sp)
                         }
                     }
                 }
@@ -144,7 +145,6 @@ fun ProfileScreen(auth: Auth) {
                     MenuItem(text = "Tu compra") {
                         isMenuExpanded = false
                         context.startActivity(Intent(context, CarritoActivity::class.java))
-
                     }
                     Spacer(modifier = Modifier.height(32.dp))
                     MenuItem(text = "Mi cuenta") {
@@ -155,16 +155,6 @@ fun ProfileScreen(auth: Auth) {
             }
         }
     }
-@Composable
-fun MenuItem(text: String, onClick: () -> Unit) {
-    Text(
-        text = text,
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable { onClick() } // Maneja el clic
-            .padding(16.dp), // Añadimos espacio para que no esté tan pegado
-        color = Color.Black,
-        fontSize = 18.sp,
-        textAlign = TextAlign.Left
-    )
-}}
+}
+
+

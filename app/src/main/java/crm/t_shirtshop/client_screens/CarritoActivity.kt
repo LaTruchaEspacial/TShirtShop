@@ -29,6 +29,7 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import crm.t_shirtshop.comun_screens.ProfileActivity
 import crm.t_shirtshop.dataClass.Camiseta
+import crm.t_shirtshop.dataClass.User
 import crm.t_shirtshop.ui.theme.TShirtShopTheme
 import crm.t_shirtshop.R
 
@@ -193,7 +194,6 @@ fun CarritoScreen() {
                 Text(text = "Comprar", fontSize = 18.sp, color = Color.White)
             }
 
-
             // Cargar lista de camisetas
             if (isLoading) {
                 Box(
@@ -272,6 +272,87 @@ fun CarritoScreen() {
         }
     }
 }
+
+fun actualizarCantidadEnCarrito(
+    context: Context,
+    camisetaId: String,
+    cantidad: Int,
+    esAumento: Boolean,
+    carritoItems: List<Pair<Camiseta, Int>>,
+    onUpdated: (List<Pair<Camiseta, Int>>) -> Unit
+) {
+    val db = FirebaseFirestore.getInstance()
+    val auth = FirebaseAuth.getInstance()
+    val user = auth.currentUser
+
+    if (user != null) {
+        val carritoRef = db.collection("carrito")
+            .whereEqualTo("userId", user.uid)
+            .whereEqualTo("camisetaId", camisetaId)
+
+        carritoRef.get()
+            .addOnSuccessListener { querySnapshot ->
+                if (querySnapshot.isEmpty) {
+                    // Si no se encuentra el artículo en el carrito, lo agregamos
+                    val carritoItem = hashMapOf(
+                        "userId" to user.uid,
+                        "camisetaId" to camisetaId,
+                        "cantidad" to cantidad
+                    )
+                    db.collection("carrito").add(carritoItem)
+                        .addOnSuccessListener {
+                            Toast.makeText(context, "Camiseta agregada al carrito", Toast.LENGTH_SHORT).show()
+                            // Actualizar carrito con la cantidad correcta
+                            onUpdated(carritoItems + Pair(Camiseta(camisetaId, "", 0.0, "", 0), cantidad))
+                        }
+                        .addOnFailureListener {
+                            Toast.makeText(context, "Error al agregar camiseta al carrito", Toast.LENGTH_SHORT).show()
+                        }
+                } else {
+                    // Si el artículo ya está en el carrito, actualizamos la cantidad
+                    val currentItem = querySnapshot.documents.first()
+                    val currentCantidad = currentItem.getLong("cantidad")?.toInt() ?: 0
+                    val nuevaCantidad = if (esAumento) currentCantidad + 1 else currentCantidad - 1
+
+                    if (nuevaCantidad > 0) {
+                        currentItem.reference.update("cantidad", nuevaCantidad)
+                            .addOnSuccessListener {
+                                Toast.makeText(context, "Cantidad actualizada en el carrito", Toast.LENGTH_SHORT).show()
+
+                                // Actualizamos el estado local de la lista del carrito con la nueva cantidad
+                                val updatedItems = carritoItems.map {
+                                    if (it.first.camisetaId == camisetaId) {
+                                        Pair(it.first, nuevaCantidad)
+                                    } else {
+                                        it
+                                    }
+                                }
+                                onUpdated(updatedItems)
+                            }
+                            .addOnFailureListener {
+                                Toast.makeText(context, "Error al actualizar la cantidad", Toast.LENGTH_SHORT).show()
+                            }
+                    } else {
+                        // Si la cantidad llega a 0, eliminamos el artículo del carrito
+                        currentItem.reference.delete()
+                            .addOnSuccessListener {
+                                Toast.makeText(context, "Artículo eliminado del carrito", Toast.LENGTH_SHORT).show()
+                                onUpdated(carritoItems.filterNot { it.first.camisetaId == camisetaId })
+                            }
+                            .addOnFailureListener {
+                                Toast.makeText(context, "Error al eliminar artículo del carrito", Toast.LENGTH_SHORT).show()
+                            }
+                    }
+                }
+            }
+            .addOnFailureListener {
+                Toast.makeText(context, "Error al acceder al carrito", Toast.LENGTH_SHORT).show()
+            }
+    } else {
+        Toast.makeText(context, "Por favor, inicie sesión para modificar el carrito", Toast.LENGTH_SHORT).show()
+    }
+}
+
 
 @Composable
 fun CarritoItem(
@@ -364,68 +445,3 @@ fun CarritoItem(
         }
     }
 }
-fun actualizarCantidadEnCarrito(
-    context: Context,
-    camisetaId: String,
-    cantidad: Int,
-    isAdding: Boolean,
-    carritoItems: List<Pair<Camiseta, Int>>,
-    updateItemsList: (List<Pair<Camiseta, Int>>) -> Unit
-) {
-    val db = FirebaseFirestore.getInstance()
-    val auth = FirebaseAuth.getInstance()
-    val user = auth.currentUser
-
-    if (user != null) {
-        db.collection("carrito")
-            .whereEqualTo("userId", user.uid)
-            .whereEqualTo("camisetaId", camisetaId)
-            .get()
-            .addOnSuccessListener { querySnapshot ->
-                for (document in querySnapshot) {
-                    val currentCantidad = document.getLong("cantidad")?.toInt() ?: 0
-                    val newCantidad = if (isAdding) currentCantidad + 1 else currentCantidad - 1
-
-                    if (newCantidad > 0) {
-                        // Si la cantidad sigue siendo mayor a 0, actualizamos
-                        document.reference.update("cantidad", newCantidad)
-                            .addOnSuccessListener {
-                                Toast.makeText(context, "Cantidad Modificada", Toast.LENGTH_SHORT).show()
-
-                                // Actualizar la lista de carrito localmente
-                                val updatedItems = carritoItems.map { (camiseta, oldCantidad) ->
-                                    if (camiseta.camisetaId == camisetaId) {
-                                        camiseta to newCantidad // Actualiza la cantidad
-                                    } else {
-                                        camiseta to oldCantidad // Mantiene los demás artículos
-                                    }
-                                }
-                                updateItemsList(updatedItems)
-                            }
-                            .addOnFailureListener {
-                                Toast.makeText(context, "Error al actualizar la cantidad", Toast.LENGTH_SHORT).show()
-                            }
-                    } else {
-                        // Si la cantidad es 0, eliminamos el artículo
-                        document.reference.delete()
-                            .addOnSuccessListener {
-                                Toast.makeText(context, "Artículo eliminado del carrito", Toast.LENGTH_SHORT).show()
-
-                                // Eliminar el artículo de la lista del carrito localmente
-                                val updatedItems = carritoItems.filterNot { (camiseta, _) -> camiseta.camisetaId == camisetaId }
-                                updateItemsList(updatedItems)
-                            }
-                            .addOnFailureListener {
-                                Toast.makeText(context, "Error al eliminar el artículo", Toast.LENGTH_SHORT).show()
-                            }
-                    }
-                }
-            }
-            .addOnFailureListener {
-                Toast.makeText(context, "Error al actualizar cantidad", Toast.LENGTH_SHORT).show()
-            }
-    } else {
-        Toast.makeText(context, "Por favor, inicie sesión.", Toast.LENGTH_SHORT).show()
-    }
-}
-

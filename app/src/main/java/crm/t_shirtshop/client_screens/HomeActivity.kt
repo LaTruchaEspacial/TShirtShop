@@ -62,7 +62,7 @@ fun HomeScreen() {
                     val id = document.id // Firestore proporciona el ID del documento
                     val nombre = document.getString("nombre") ?: ""
                     val precio = document.getDouble("precio") ?: 0.0
-                    val url = document.getString("url") ?: ""
+                    val url = document.getString("url") ?: ""  // Aquí sigue siendo necesario tener la URL
                     val cantidadDisponible = document.getDouble("cantidad") ?: 0.0
                     Camiseta(id, nombre, precio, url, cantidadDisponible.toInt())
                 }
@@ -123,7 +123,7 @@ fun HomeScreen() {
                                     val carritoItem = mapOf(
                                         "userId" to user.uid, // Utilizar el UID del usuario actual
                                         "camisetaId" to camisetaId, // Pasamos el ID de la camiseta
-                                        "cantidad" to cantidadDisponible  // Pasamos la cantidad inicial (1)
+                                        "cantidad" to cantidadDisponible   // Pasamos la cantidad inicial (1)
                                     )
                                     db.collection("carrito").add(carritoItem)
                                         .addOnSuccessListener {
@@ -233,7 +233,6 @@ fun MenuItem(text: String, onClick: () -> Unit) {
         textAlign = TextAlign.Left
     )
 }
-
 @Composable
 fun CamisetaItem(
     camiseta: Camiseta,
@@ -244,6 +243,12 @@ fun CamisetaItem(
     val context = LocalContext.current
     val resourceId = context.resources.getIdentifier(drawableName, "drawable", context.packageName)
 
+    var isOutOfStock by remember { mutableStateOf(camiseta.cantidadDisponible == 0) }
+
+    LaunchedEffect(camiseta.cantidadDisponible) {
+        isOutOfStock = camiseta.cantidadDisponible == 0
+    }
+
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -251,69 +256,93 @@ fun CamisetaItem(
         colors = CardDefaults.cardColors(containerColor = Color.White),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
     ) {
-        Column(
-            modifier = Modifier.padding(16.dp)
-        ) {
-            // Mostrar la imagen desde los recursos locales
-            if (resourceId != 0) {
-                Image(
-                    painter = painterResource(id = resourceId),
-                    contentDescription = "Imagen de la camiseta",
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(200.dp)
-                        .padding(bottom = 8.dp),
-                    contentScale = ContentScale.Crop
-                )
-            } else {
-                Image(
-                    painter = painterResource(id = R.drawable.ic_launcher_foreground),
-                    contentDescription = "Imagen por defecto",
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(200.dp)
-                        .padding(bottom = 8.dp),
-                    contentScale = ContentScale.Crop
-                )
-            }
-
-            Text(text = "Nombre: ${camiseta.nombre}", fontSize = 20.sp, color = Color.Black)
-            Text(text = "Precio: ${camiseta.precio} €", fontSize = 18.sp, color = Color.Gray)
-            Text(
-                text = "Cantidad disponible: ${camiseta.cantidadDisponible}",
-                fontSize = 16.sp,
-                color = Color.Gray
-            )
-
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+        Box {
+            Column(
+                modifier = Modifier.padding(16.dp)
             ) {
-                Button(
-                    onClick = {
-                        onAddToCart(
-                            camiseta.camisetaId,
-                            1 // Añadir al carrito con cantidad 1
-                        )
-                    },
-                    modifier = Modifier.weight(1f),
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFFC107))
-                ) {
-                    Text("Add Carrito", color = Color.Black)
+                // Mostrar la imagen desde los recursos locales
+                if (resourceId != 0) {
+                    Image(
+                        painter = painterResource(id = resourceId),
+                        contentDescription = "Imagen de la camiseta",
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(200.dp)
+                            .padding(bottom = 8.dp),
+                        contentScale = ContentScale.Crop
+                    )
+                } else {
+                    Image(
+                        painter = painterResource(id = R.drawable.ic_launcher_foreground),
+                        contentDescription = "Imagen por defecto",
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(200.dp)
+                            .padding(bottom = 8.dp),
+                        contentScale = ContentScale.Crop
+                    )
                 }
 
-                Button(
-                    onClick = {
-                        // Verifica si la cantidad disponible es suficiente para la compra
-                        if (camiseta.cantidadDisponible > 0) {
-                            onBuy(camiseta.camisetaId, 1, camiseta.cantidadDisponible) // Comprar 1 artículo
-                        } else {
-                            Toast.makeText(context, "No hay suficiente stock", Toast.LENGTH_SHORT).show()
-                        }
-                    },
-                    modifier = Modifier.weight(1f),
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFF5722))
+                Text(text = "Nombre: ${camiseta.nombre}", fontSize = 20.sp, color = Color.Black)
+                Text(text = "Precio: ${camiseta.precio} €", fontSize = 18.sp, color = Color.Gray)
+                Text(
+                    text = "Cantidad disponible: ${camiseta.cantidadDisponible}",
+                    fontSize = 16.sp,
+                    color = Color.Gray
+                )
+
+                if (isOutOfStock) {
+                    // Mostrar "Agotado"
+                    Text(
+                        text = "AGOTADO",
+                        color = Color.Red,
+                        fontSize = 18.sp,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 8.dp),
+                        textAlign = TextAlign.Center
+                    )
+
+                    // Deshabilitar botones y poner capa translúcida
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize() // Usa fillMaxSize en lugar de matchParentSize
+                            .background(Color.Gray.copy(alpha = 0.5f)) // Capa translúcida
+                            .align(Alignment.CenterHorizontally) // Alinea el contenido dentro del Box
+                    )
+                }
+
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    Text("Comprar", color = Color.White)
+                    Button(
+                        onClick = {
+                            if (!isOutOfStock) {
+                                onAddToCart(camiseta.camisetaId, 0)  // Añadir al carrito con cantidad 1
+                            }
+                        },
+                        modifier = Modifier.weight(1f),
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFFC107)),
+                        enabled = !isOutOfStock // Deshabilitar el botón si está agotada
+                    ) {
+                        Text("Add Carrito", color = Color.Black)
+                    }
+
+                    Button(
+                        onClick = {
+                            // Verifica si la cantidad disponible es suficiente para la compra
+                            if (!isOutOfStock && camiseta.cantidadDisponible > 0) {
+                                onBuy(camiseta.camisetaId, 1, camiseta.cantidadDisponible) // Comprar 1 artículo
+                            } else {
+                                Toast.makeText(context, "No hay suficiente stock", Toast.LENGTH_SHORT).show()
+                            }
+                        },
+                        modifier = Modifier.weight(1f),
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFF5722)),
+                        enabled = !isOutOfStock // Deshabilitar el botón si está agotada
+                    ) {
+                        Text("Comprar", color = Color.White)
+                    }
                 }
             }
         }

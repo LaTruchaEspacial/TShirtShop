@@ -28,6 +28,11 @@
         <activity android:name=".comun_screens.RegisterActivity" />
         <activity android:name=".comun_screens.LoginActivity" />
         <activity android:name=".comun_screens.ProfileActivity" />
+        <activity android:name=".admin_screens.AdminActivity" />
+        <activity android:name=".admin_screens.ProductosAdminActivity" />
+        <activity android:name=".admin_screens.UsersAdminActivity" />
+
+
 
 
 
