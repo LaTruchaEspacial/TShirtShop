@@ -24,6 +24,7 @@
             </intent-filter>
         </activity>
         <activity android:name=".client_screens.HomeActivity" />
+        <activity android:name=".client_screens.CarritoActivity" />
         <activity android:name=".comun_screens.RegisterActivity" />
         <activity android:name=".comun_screens.LoginActivity" />
         <activity android:name=".comun_screens.ProfileActivity" />

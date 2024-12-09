@@ -23,6 +23,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import crm.t_shirtshop.R
 import crm.t_shirtshop.auth.Auth
+import crm.t_shirtshop.client_screens.CarritoActivity
 import crm.t_shirtshop.client_screens.HomeActivity
 import crm.t_shirtshop.client_screens.MenuItem
 import crm.t_shirtshop.ui.theme.TShirtShopTheme
@@ -66,7 +67,7 @@ fun ProfileScreen(auth: Auth) {
                 actions = {
                     IconButton(onClick = { isMenuExpanded = !isMenuExpanded }) {
                         Icon(
-                            painter = painterResource(id = R.drawable.ic_launcher_foreground), // icono de 3 rayas
+                            painter = painterResource(id = R.drawable.iconomenu), // icono de 3 rayas
                             contentDescription = "Menú",
                             tint = Color.Black
                         )
@@ -140,9 +141,11 @@ fun ProfileScreen(auth: Auth) {
                         context.startActivity(Intent(context, HomeActivity::class.java))
                     }
                     Spacer(modifier = Modifier.height(32.dp))
-                    MenuItem(text = "Promociones") { isMenuExpanded = false }
-                    Spacer(modifier = Modifier.height(32.dp))
-                    MenuItem(text = "Tu compra") { isMenuExpanded = false }
+                    MenuItem(text = "Tu compra") {
+                        isMenuExpanded = false
+                        context.startActivity(Intent(context, CarritoActivity::class.java))
+
+                    }
                     Spacer(modifier = Modifier.height(32.dp))
                     MenuItem(text = "Mi cuenta") {
                         isMenuExpanded = false
