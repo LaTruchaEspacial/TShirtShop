@@ -1,5 +1,6 @@
 package crm.t_shirtshop.admin_screens
 
+import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.widget.Toast
@@ -23,21 +24,28 @@ import crm.t_shirtshop.ui.theme.TShirtShopTheme
 import com.google.firebase.firestore.FirebaseFirestore
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.sp
+import com.google.firebase.auth.FirebaseAuth
+import crm.t_shirtshop.MainActivity
+import crm.t_shirtshop.comun_screens.SoporteActivity
+import crm.t_shirtshop.auth.Auth  // Importar la clase Auth
 
 class ProductosAdminActivity : ComponentActivity() {
+    private val auth = Auth()  // Crear instancia de Auth
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
             TShirtShopTheme {
-                ProductosAdminScreen()
+                val context = LocalContext.current  // Obtener el contexto dentro de la función Composable
+                ProductosAdminScreen(context = context)  // Pasar el contexto a la función ProductosAdminScreen
             }
         }
     }
 }
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ProductosAdminScreen() {
+fun ProductosAdminScreen(context: Context) {
+
     var camisetaList by remember { mutableStateOf<List<Camiseta>>(emptyList()) }
     var searchQuery by remember { mutableStateOf("") }
     var selectedCamiseta by remember { mutableStateOf<Camiseta?>(null) }
@@ -59,7 +67,7 @@ fun ProductosAdminScreen() {
                         nombre = document.getString("nombre") ?: "",
                         precio = document.getDouble("precio") ?: 0.0,
                         url = document.getString("url") ?: "",
-                        cantidadDisponible = document.getLong("cantidad")?.toInt() ?: 0
+                        cantidadDisponible = document.getDouble("cantidad")?.toInt() ?: 0
                     )
                 }
             }
@@ -78,6 +86,7 @@ fun ProductosAdminScreen() {
                     containerColor = Color(0xFF1976D2)
                 ),
                 actions = {
+                    // Botón para abrir el menú
                     IconButton(onClick = { isMenuExpanded = !isMenuExpanded }) {
                         Icon(imageVector = Icons.Default.Menu, contentDescription = "Abrir menú", tint = Color.White)
                     }
@@ -87,6 +96,18 @@ fun ProductosAdminScreen() {
         content = { innerPadding ->
             Box(modifier = Modifier.padding(innerPadding)) {
                 Column {
+                    // Mostrar el formulario de edición si se ha seleccionado una camiseta
+                    selectedCamiseta?.let { camiseta ->
+                        EditCamisetaForm(camiseta = camiseta, onDismiss = {
+                            selectedCamiseta = null
+                        }, onUpdate = { updatedCamiseta ->
+                            camisetaList = camisetaList.map {
+                                if (it.camisetaId == updatedCamiseta.camisetaId) updatedCamiseta else it
+                            }
+                            selectedCamiseta = null
+                        })
+                    }
+
                     // Buscador de camisetas
                     SearchBar(searchQuery) { searchQuery = it }
 
@@ -96,19 +117,6 @@ fun ProductosAdminScreen() {
                     CamisetaList(camisetas = filteredCamisetas, onEdit = { camiseta ->
                         selectedCamiseta = camiseta
                     })
-
-                    // Mostrar el formulario de edición si se ha seleccionado una camiseta
-                    selectedCamiseta?.let { camiseta ->
-                        EditCamisetaForm(camiseta = camiseta, onDismiss = {
-                            selectedCamiseta = null
-                        }, onUpdate = { updatedCamiseta ->
-                            // Actualizar camiseta en la lista de UI
-                            camisetaList = camisetaList.map {
-                                if (it.camisetaId == updatedCamiseta.camisetaId) updatedCamiseta else it
-                            }
-                            selectedCamiseta = null
-                        })
-                    }
                 }
             }
         }
@@ -147,12 +155,31 @@ fun ProductosAdminScreen() {
                     val intent = Intent(context, ProductosAdminActivity::class.java)
                     context.startActivity(intent)
                 }
+
+                Spacer(modifier = Modifier.height(32.dp))
+
+                // Opción "Soporte"
+                MenuItem(text = "Soporte") {
+                    isMenuExpanded = false
+                    val intent = Intent(context, SoporteActivity::class.java)
+                    context.startActivity(intent)
+                }
+
+                Spacer(modifier = Modifier.height(32.dp))
+
+                // Opción "Cerrar sesión"
+                MenuItem(text = "Cerrar sesión") {
+                    isMenuExpanded = false
+                    // Lógica para cerrar sesión
+                    FirebaseAuth.getInstance().signOut()
+                    val intent = Intent(context, MainActivity::class.java)
+                    context.startActivity(intent)
+                    (context as ComponentActivity).finish() // Asegura que no se puede volver a la actividad de productos
+                }
             }
         }
     }
 }
-
-
 
 @Composable
 fun CamisetaList(camisetas: List<Camiseta>, onEdit: (Camiseta) -> Unit) {
@@ -207,7 +234,7 @@ fun EditCamisetaForm(camiseta: Camiseta, onDismiss: () -> Unit, onUpdate: (Camis
             Button(
                 onClick = {
                     // Actualizar camiseta en Firestore
-                    val camisetaMap = mapOf("cantidadDisponible" to cantidad)
+                    val camisetaMap = mapOf("cantidad" to cantidad)
                     firestore.collection("camisetas").document(camiseta.camisetaId)
                         .update(camisetaMap)
                         .addOnSuccessListener {

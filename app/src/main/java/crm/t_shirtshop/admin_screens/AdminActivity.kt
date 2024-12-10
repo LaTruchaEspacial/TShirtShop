@@ -11,6 +11,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import crm.t_shirtshop.comun_screens.SoporteActivity
 import crm.t_shirtshop.ui.theme.TShirtShopTheme
 
 class AdminActivity : ComponentActivity() {
@@ -24,6 +25,9 @@ class AdminActivity : ComponentActivity() {
                     },
                     onManageProductsClick = {
                         startActivity(Intent(this, ProductosAdminActivity::class.java))
+                    },
+                    onSupportClick = {
+                        startActivity(Intent(this, SoporteActivity::class.java))
                     }
                 )
             }
@@ -34,7 +38,8 @@ class AdminActivity : ComponentActivity() {
 @Composable
 fun AdminScreen(
     onManageUsersClick: () -> Unit,
-    onManageProductsClick: () -> Unit
+    onManageProductsClick: () -> Unit,
+    onSupportClick: () -> Unit
 ) {
     Box(
         modifier = Modifier.fillMaxSize(),
@@ -49,6 +54,9 @@ fun AdminScreen(
             }
             Button(onClick = onManageProductsClick) {
                 Text(text = "Administrar productos")
+            }
+            Button(onClick = onSupportClick) {
+                Text(text = "Soporte")
             }
         }
     }

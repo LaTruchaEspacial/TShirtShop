@@ -57,6 +57,7 @@ class SoporteActivity : ComponentActivity() {
     }
 }
 
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SoporteScreen(previousActivity: String, onBackClick: () -> Unit) {
@@ -65,13 +66,13 @@ fun SoporteScreen(previousActivity: String, onBackClick: () -> Unit) {
     val user = auth.currentUser
 
     var nuevoMensaje by remember { mutableStateOf("") }
-    var mensajes by remember { mutableStateOf<List<Mensaje>>(emptyList()) }
+    var mensajes = remember { mutableStateListOf<Mensaje>() } // Usamos mutableStateListOf para la lista
     val context = LocalContext.current
 
     // Escuchar mensajes en tiempo real desde Firestore
     LaunchedEffect(Unit) {
         db.collection("soporte")
-            .orderBy("timestamp")
+            .orderBy("timestamp", com.google.firebase.firestore.Query.Direction.ASCENDING) // Ordenar por timestamp
             .addSnapshotListener { snapshot, exception ->
                 if (exception != null) {
                     Toast.makeText(context, "Error al cargar los mensajes", Toast.LENGTH_SHORT).show()
@@ -80,25 +81,26 @@ fun SoporteScreen(previousActivity: String, onBackClick: () -> Unit) {
 
                 if (snapshot != null && !snapshot.isEmpty) {
                     val loadedMessages = mutableListOf<Mensaje>()
-                    val totalMessages = snapshot.documents.size
-                    var processedMessages = 0
 
+                    // Procesar los mensajes para obtener el nombre y rol
                     snapshot.documents.forEach { document ->
                         val userId = document.getString("userId") ?: ""
                         val texto = document.getString("texto") ?: ""
-                        val role = document.getString("role") ?: "user"
+                        val timestamp = document.getLong("timestamp") ?: 0L // Asegúrate de obtener el timestamp
 
-                        obtenerNombreUsuario(userId, db) { userName ->
-                            loadedMessages.add(Mensaje(userId, texto, role, userName))
-                            processedMessages++
+                        // Obtener nombre y rol del usuario de Firestore
+                        obtenerNombreYRoleUsuario(userId, db) { userName, role ->
+                            loadedMessages.add(Mensaje(userId, texto, role, userName, timestamp))
 
-                            if (processedMessages == totalMessages) {
-                                mensajes = loadedMessages
+                            // Cuando todos los mensajes estén cargados, actualizamos el estado de la lista
+                            if (loadedMessages.size == snapshot.size()) {
+                                mensajes.clear()
+                                mensajes.addAll(loadedMessages.sortedBy { it.timestamp })
                             }
                         }
                     }
                 } else {
-                    mensajes = emptyList()
+                    mensajes.clear() // Limpiar la lista si no hay mensajes
                 }
             }
     }
@@ -147,32 +149,26 @@ fun SoporteScreen(previousActivity: String, onBackClick: () -> Unit) {
                 Button(
                     onClick = {
                         if (nuevoMensaje.isNotBlank() && user != null) {
-                            val userName = user.displayName ?: "Desconocido"
+                            val userId = user.uid
 
-                            val mensaje = mapOf(
-                                "userId" to user.uid,
-                                "texto" to nuevoMensaje,
-                                "role" to (if (user.displayName == "admin") "admin" else "user"),
-                                "userName" to userName,
-                                "timestamp" to System.currentTimeMillis()
-                            )
+                            // Consultamos el rol del usuario antes de enviar el mensaje
+                            obtenerNombreYRoleUsuario(userId, db) { userName, role ->
+                                val mensaje = mapOf(
+                                    "userId" to userId,
+                                    "texto" to nuevoMensaje,
+                                    "role" to role,
+                                    "timestamp" to System.currentTimeMillis() // Guardamos el timestamp actual
+                                )
 
-                            db.collection("soporte").add(mensaje)
-                                .addOnSuccessListener {
-                                    nuevoMensaje = ""
-                                    Toast.makeText(
-                                        context,
-                                        "Mensaje enviado",
-                                        Toast.LENGTH_SHORT
-                                    ).show()
-                                }
-                                .addOnFailureListener { exception ->
-                                    Toast.makeText(
-                                        context,
-                                        "Error al enviar el mensaje: ${exception.message}",
-                                        Toast.LENGTH_SHORT
-                                    ).show()
-                                }
+                                db.collection("soporte").add(mensaje)
+                                    .addOnSuccessListener {
+                                        nuevoMensaje = ""
+                                        Toast.makeText(context, "Mensaje enviado", Toast.LENGTH_SHORT).show()
+                                    }
+                                    .addOnFailureListener { exception ->
+                                        Toast.makeText(context, "Error al enviar el mensaje: ${exception.message}", Toast.LENGTH_SHORT).show()
+                                    }
+                            }
                         }
                     }
                 ) {
@@ -186,41 +182,58 @@ fun SoporteScreen(previousActivity: String, onBackClick: () -> Unit) {
 @Composable
 fun MessageItem(mensaje: Mensaje, isAdmin: Boolean) {
     val alignment = if (isAdmin) Alignment.Start else Alignment.End
-    val backgroundColor = if (isAdmin) Color(0xFFBBDEFB) else Color(0xFFFFF59D)
+    val backgroundColor = if (isAdmin) Color.Gray else Color(0xFFFFD700)
 
-    Column(
+    Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(8.dp)
-            .background(backgroundColor, shape = MaterialTheme.shapes.small),
-        horizontalAlignment = if (isAdmin) Alignment.Start else Alignment.End
+            .padding(8.dp),
+        horizontalArrangement = if (isAdmin) Arrangement.Start else Arrangement.End
     ) {
-        Text(
-            text = mensaje.userName,
-            style = TextStyle(fontSize = 12.sp, fontWeight = FontWeight.Normal, color = Color.Gray),
-            modifier = Modifier.padding(start = 12.dp, end = 12.dp)
-        )
-        Text(
-            text = mensaje.texto,
-            style = TextStyle(fontSize = 16.sp, fontWeight = FontWeight.Normal, color = Color.Black),
-            modifier = Modifier.padding(12.dp)
-        )
+        Column(
+            modifier = Modifier
+                .background(backgroundColor, shape = MaterialTheme.shapes.medium)
+                .padding(12.dp)
+                .widthIn(max = 250.dp), // Limita el ancho máximo del mensaje
+            horizontalAlignment = Alignment.Start
+        ) {
+            // Nombre del usuario (opcional)
+            Text(
+                text = mensaje.userName,
+                style = TextStyle(
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = if (isAdmin) Color.White else Color.Black
+                )
+            )
+            Spacer(modifier = Modifier.height(4.dp))
+            // Contenido del mensaje
+            Text(
+                text = mensaje.texto,
+                style = TextStyle(
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Normal,
+                    color = if (isAdmin) Color.White else Color.Black
+                )
+            )
+        }
     }
 }
 
-fun obtenerNombreUsuario(userId: String, db: FirebaseFirestore, onComplete: (String) -> Unit) {
+fun obtenerNombreYRoleUsuario(userId: String, db: FirebaseFirestore, onComplete: (String, String) -> Unit) {
     db.collection("users")
         .document(userId)
         .get()
         .addOnSuccessListener { document ->
             if (document.exists()) {
                 val userName = document.getString("nombre") ?: "Desconocido"
-                onComplete(userName)
+                val role = document.getString("role") ?: "user" // Obtenemos el role
+                onComplete(userName, role)
             } else {
-                onComplete("Desconocido")
+                onComplete("Desconocido", "user")
             }
         }
         .addOnFailureListener {
-            onComplete("Desconocido")
+            onComplete("Desconocido", "user")
         }
 }

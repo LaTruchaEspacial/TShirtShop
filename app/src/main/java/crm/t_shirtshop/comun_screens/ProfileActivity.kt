@@ -21,6 +21,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import crm.t_shirtshop.MainActivity
 import crm.t_shirtshop.R
 import crm.t_shirtshop.auth.Auth
 import crm.t_shirtshop.client_screens.CarritoActivity
@@ -42,7 +43,6 @@ class ProfileActivity : ComponentActivity() {
         }
     }
 }
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProfileScreen(auth: Auth) {
@@ -117,6 +117,21 @@ fun ProfileScreen(auth: Auth) {
                         }
                     }
                 }
+
+                // Botón de Cerrar sesión
+                Spacer(modifier = Modifier.height(32.dp))
+                Button(
+                    onClick = {
+                        // Llamar a un método para cerrar sesión si es necesario
+                        auth.logout()
+                        // Redirigir al MainActivity
+                        context.startActivity(Intent(context, MainActivity::class.java))
+                        (context as ComponentActivity).finish()  // Para asegurarse de que no se puede volver a la actividad de perfil
+                    },
+                    modifier = Modifier.fillMaxWidth().padding(16.dp)
+                ) {
+                    Text(text = "Cerrar sesión", fontSize = 16.sp, color = Color.White)
+                }
             }
         }
 
@@ -149,7 +164,13 @@ fun ProfileScreen(auth: Auth) {
                     Spacer(modifier = Modifier.height(32.dp))
                     MenuItem(text = "Mi cuenta") {
                         isMenuExpanded = false
-                        // Aquí podríamos recargar la pantalla actual o realizar alguna acción adicional
+                        context.startActivity(Intent(context, ProfileActivity::class.java))
+                    }
+                    Spacer(modifier = Modifier.height(32.dp))
+                    // Nueva opción de Soporte
+                    MenuItem(text = "Soporte") {
+                        isMenuExpanded = false
+                        context.startActivity(Intent(context, SoporteActivity::class.java)) // Asegúrate de crear la SoporteActivity
                     }
                 }
             }

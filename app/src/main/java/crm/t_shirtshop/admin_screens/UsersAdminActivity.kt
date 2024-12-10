@@ -25,6 +25,9 @@ import androidx.compose.material3.MaterialTheme.typography
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.TextPainter
 import androidx.compose.ui.unit.sp
+import com.google.firebase.auth.FirebaseAuth
+import crm.t_shirtshop.MainActivity
+import crm.t_shirtshop.comun_screens.SoporteActivity
 
 class UsersAdminActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -36,21 +39,21 @@ class UsersAdminActivity : ComponentActivity() {
         }
     }
 }
+
+
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun UsersAdminScreen() {
-    // Estado para los usuarios
     var userList by remember { mutableStateOf<List<User>>(emptyList()) }
     var searchQuery by remember { mutableStateOf("") }
     var selectedUser by remember { mutableStateOf<User?>(null) }
     var isMenuExpanded by remember { mutableStateOf(false) }
 
-    // Filtrar usuarios por nombre
     val filteredUsers = userList.filter {
         it.nombre.contains(searchQuery, ignoreCase = true)
     }
 
-    // Obtener usuarios de Firestore
     LaunchedEffect(Unit) {
         val firestore = FirebaseFirestore.getInstance()
         firestore.collection("users").get()
@@ -77,7 +80,7 @@ fun UsersAdminScreen() {
                     )
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = Color(0xFF1976D2) // Usando containerColor en lugar de backgroundColor
+                    containerColor = Color(0xFF1976D2)
                 ),
                 actions = {
                     IconButton(onClick = { isMenuExpanded = !isMenuExpanded }) {
@@ -89,6 +92,20 @@ fun UsersAdminScreen() {
         content = { innerPadding ->
             Box(modifier = Modifier.padding(innerPadding)) {
                 Column {
+                    // Mostrar el formulario de edición si se ha seleccionado un usuario
+                    selectedUser?.let { user ->
+                        EditUserForm(user = user, onDismiss = {
+                            selectedUser = null // Cierra el formulario al actualizar
+                        }, onUpdate = { updatedUser ->
+                            userList = userList.map {
+                                if (it.userId == updatedUser.userId) updatedUser else it
+                            }
+                            selectedUser = null // Cerrar el formulario
+                        })
+
+                        Spacer(modifier = Modifier.height(16.dp)) // Espacio entre el formulario y el resto del contenido
+                    }
+
                     // Buscador de usuarios
                     SearchBar(searchQuery) { searchQuery = it }
 
@@ -98,25 +115,10 @@ fun UsersAdminScreen() {
                     UserList(users = filteredUsers, onEdit = { user ->
                         selectedUser = user
                     })
-
-                    // Mostrar el formulario de edición si se ha seleccionado un usuario
-                    selectedUser?.let { user ->
-                        EditUserForm(user = user, onDismiss = {
-                            selectedUser = null // Cierra el formulario al actualizar
-                        }, onUpdate = { updatedUser ->
-                            // Actualizar la lista de usuarios en la UI sin salir de la pantalla
-                            userList = userList.map {
-                                if (it.userId == updatedUser.userId) updatedUser else it
-                            }
-                            selectedUser = null // Cerrar el formulario
-                        })
-                    }
                 }
             }
         }
     )
-
-    // Menú lateral desplegable
     if (isMenuExpanded) {
         Box(
             modifier = Modifier
@@ -133,6 +135,7 @@ fun UsersAdminScreen() {
                 horizontalAlignment = Alignment.Start
             ) {
                 val context = LocalContext.current
+
                 // Opción "Usuarios"
                 MenuItem(text = "Usuarios") {
                     isMenuExpanded = false
@@ -148,9 +151,31 @@ fun UsersAdminScreen() {
                     val intent = Intent(context, ProductosAdminActivity::class.java)
                     context.startActivity(intent)
                 }
+
+                Spacer(modifier = Modifier.height(32.dp))
+
+                // Opción "Soporte"
+                MenuItem(text = "Soporte") {
+                    isMenuExpanded = false
+                    val intent = Intent(context, SoporteActivity::class.java)
+                    context.startActivity(intent)
+                }
+
+                Spacer(modifier = Modifier.height(32.dp))
+
+                // Opción "Cerrar sesión"
+                MenuItem(text = "Cerrar sesión") {
+                    isMenuExpanded = false
+                    // Lógica para cerrar sesión
+                    FirebaseAuth.getInstance().signOut()
+                    val intent = Intent(context, MainActivity::class.java)
+                    context.startActivity(intent)
+                    (context as ComponentActivity).finish() // Asegura que no se puede volver a la actividad de productos
+                }
             }
         }
     }
+
 }
 
 
@@ -172,7 +197,7 @@ fun SearchBar(searchQuery: String, onQueryChanged: (String) -> Unit) {
     TextField(
         value = searchQuery,
         onValueChange = onQueryChanged,
-        label = { Text("Buscar Usuario") },
+        label = { Text("Buscar") },
         modifier = Modifier.fillMaxWidth().padding(16.dp),
         singleLine = true
     )

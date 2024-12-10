@@ -32,6 +32,7 @@ import crm.t_shirtshop.dataClass.Camiseta
 import crm.t_shirtshop.dataClass.User
 import crm.t_shirtshop.ui.theme.TShirtShopTheme
 import crm.t_shirtshop.R
+import crm.t_shirtshop.comun_screens.SoporteActivity
 
 
 class CarritoActivity : ComponentActivity() {
@@ -267,9 +268,16 @@ fun CarritoScreen() {
                         isMenuExpanded = false
                         context.startActivity(Intent(context, ProfileActivity::class.java))
                     }
+                    Spacer(modifier = Modifier.height(32.dp))
+                    // Nueva opción de Soporte
+                    MenuItem(text = "Soporte") {
+                        isMenuExpanded = false
+                        context.startActivity(Intent(context, SoporteActivity::class.java)) // Asegúrate de crear la SoporteActivity
+                    }
                 }
             }
         }
+
     }
 }
 

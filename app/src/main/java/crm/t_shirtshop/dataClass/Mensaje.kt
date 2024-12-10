@@ -4,5 +4,6 @@ data class Mensaje(
     val userId: String = "",
     val texto: String = "",
     val role: String = "",
-    val userName: String = ""  // Agregamos el nombre del usuario aquí
+    val userName: String = "",
+    val timestamp: Long = 0L  // Campo para el timestamp
 )

@@ -122,4 +122,9 @@ class Auth(
             onResult(null, "Usuario no autenticado")
         }
     }
+
+    // Método para cerrar sesión
+    fun logout() {
+        auth.signOut() // Desconecta al usuario de Firebase
+    }
 }
