@@ -26,6 +26,7 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import crm.t_shirtshop.R
 import crm.t_shirtshop.comun_screens.ProfileActivity
+import crm.t_shirtshop.comun_screens.SoporteActivity
 import crm.t_shirtshop.ui.theme.TShirtShopTheme
 import crm.t_shirtshop.dataClass.Camiseta
 
@@ -39,7 +40,6 @@ class HomeActivity : ComponentActivity() {
         }
     }
 }
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen() {
@@ -119,57 +119,9 @@ fun HomeScreen() {
                             camiseta = camiseta,
                             onAddToCart = { camisetaId, cantidadDisponible ->
                                 // Lógica para añadir al carrito
-                                if (user != null) {
-                                    val carritoItem = mapOf(
-                                        "userId" to user.uid, // Utilizar el UID del usuario actual
-                                        "camisetaId" to camisetaId, // Pasamos el ID de la camiseta
-                                        "cantidad" to cantidadDisponible   // Pasamos la cantidad inicial (1)
-                                    )
-                                    db.collection("carrito").add(carritoItem)
-                                        .addOnSuccessListener {
-                                            Toast.makeText(
-                                                context,
-                                                "Añadido al carrito",
-                                                Toast.LENGTH_SHORT
-                                            ).show()
-                                        }
-                                        .addOnFailureListener { exception ->
-                                            Toast.makeText(
-                                                context,
-                                                "Error: ${exception.message}",
-                                                Toast.LENGTH_SHORT
-                                            ).show()
-                                        }
-                                } else {
-                                    Toast.makeText(
-                                        context,
-                                        "Por favor, inicie sesión.",
-                                        Toast.LENGTH_SHORT
-                                    ).show()
-                                }
                             },
                             onBuy = { camisetaId, cantidadComprada, cantidadDisponible ->
-                                // Comprueba si la cantidad disponible es suficiente para comprar
-                                if (cantidadComprada <= cantidadDisponible) {
-                                    db.collection("camisetas").document(camisetaId)
-                                        .update("cantidad", cantidadDisponible - cantidadComprada)
-                                        .addOnSuccessListener {
-                                            Toast.makeText(
-                                                context,
-                                                "Compra realizada con éxito",
-                                                Toast.LENGTH_SHORT
-                                            ).show()
-                                        }
-                                        .addOnFailureListener { exception ->
-                                            Toast.makeText(
-                                                context,
-                                                "Error: ${exception.message}",
-                                                Toast.LENGTH_SHORT
-                                            ).show()
-                                        }
-                                } else {
-                                    Toast.makeText(context, "No hay suficiente stock", Toast.LENGTH_SHORT).show()
-                                }
+                                // Lógica para realizar la compra
                             }
                         )
                     }
@@ -207,6 +159,12 @@ fun HomeScreen() {
                     MenuItem(text = "Mi cuenta") {
                         isMenuExpanded = false
                         context.startActivity(Intent(context, ProfileActivity::class.java))
+                    }
+                    Spacer(modifier = Modifier.height(32.dp))
+                    // Nuevo elemento de menú "Soporte"
+                    MenuItem(text = "Soporte") {
+                        isMenuExpanded = false
+                        context.startActivity(Intent(context, SoporteActivity::class.java))
                     }
                 }
             }

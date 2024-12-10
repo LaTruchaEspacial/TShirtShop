@@ -31,6 +31,7 @@
         <activity android:name=".admin_screens.AdminActivity" />
         <activity android:name=".admin_screens.ProductosAdminActivity" />
         <activity android:name=".admin_screens.UsersAdminActivity" />
+        <activity android:name=".comun_screens.SoporteActivity" />
 
 
 
