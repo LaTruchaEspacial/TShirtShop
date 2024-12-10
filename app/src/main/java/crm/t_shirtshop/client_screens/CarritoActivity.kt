@@ -237,7 +237,6 @@ fun CarritoScreen() {
             Spacer(modifier = Modifier.weight(1f))
         }
 
-        // Menú lateral desplegable
         if (isMenuExpanded) {
             Box(
                 modifier = Modifier
